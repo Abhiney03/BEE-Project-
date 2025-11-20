@@ -3,7 +3,7 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 require("dotenv").config();
-var cors = require("cors");
+const cors = require("cors");
 var indexRouter = require("./routes/index");
 var userRouter = require("./routes/user");
 var restaurantRouter = require("./routes/restaurant");
@@ -12,6 +12,10 @@ var app = express();
 var securityMiddleware = require("./middlewares/security");
 require("./config/backend");
 
+app.use((req, res, next) => {
+  console.log(`🔥 REQUEST RECEIVED: ${req.method} ${req.url}`);
+  next();
+});
 //mount middleware
 app.use(logger("dev"));
 app.use(express.json());

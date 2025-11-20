@@ -42,7 +42,6 @@ const restaurantSchema = new Schema(
     },
     location: {
       type: String,
-      enum: ["North", "South", "East", "West", "Central"],
       required: true,
     },
     timeOpen: {

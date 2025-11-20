@@ -80,7 +80,7 @@ export const Header = ({ user, setUser }) => {
               <Flex justify="space-between" direction="row" align="center">
                 <Image src={logo} w={30} h={30} />
                 <Text ml="xs" fw="bold">
-                  ChopeSeats
+                  Dinerly
                 </Text>
               </Flex>
             </Anchor>

@@ -23,7 +23,6 @@ import useToast from "../../hooks/useToast";
 import LoadingSpinner from "../../components/Parts/LoadingSpinner";
 
 function NewRestaurant() {
-  // manage the state of whether a component (such as a modal) is open or closed.
   const [opened, { toggle, close }] = useDisclosure(false);
   const navigate = useNavigate();
   const { sendRequest } = useFetch();
@@ -50,6 +49,7 @@ function NewRestaurant() {
         setLoading(false);
       } catch (err) {
         console.log(err);
+        setLoading(false); 
       }
     };
 
@@ -58,25 +58,35 @@ function NewRestaurant() {
   }, []);
 
   const form = useForm({
+    initialValues: {
+      name: "",
+      category: "",
+      location: "",
+      address: "",
+      phone: "",
+      websiteUrl: "",
+      maxPax: 10,
+      timeOpen: "",
+      timeClose: "",
+      daysClose: [], 
+      description: "",
+      image: "",
+    },
     validate: {
       category: (value) =>
-        value === undefined &&
+        !value &&
         "Please choose a category which best represents your restaurant cuisine",
       location: (value) =>
-        value === undefined &&
+        !value &&
         "Please choose an area which best represents your restaurant's location",
       address: (value) =>
-        value === undefined && "Please provide your restaurant address",
-      // phone: (value) =>
-      //   value &&
-      //   /^[1-9]\d{7}$/.test(value) &&
-      //   "Please enter a valid 8-digit number for Phone",
+        !value && "Please provide your restaurant address",
       maxPax: (value) =>
-        value === undefined &&
+        !value &&
         "Please enter a number for the max no. of people your restaurant can accept for bookings",
-      timeOpen: (value) => value === undefined && "Please enter a time",
+      timeOpen: (value) => !value && "Please enter a time",
       timeClose: (value, values) =>
-        value === undefined
+        !value
           ? "Please enter a time"
           : value < values.timeOpen &&
             "Closing time must be later than opening time.",
@@ -116,8 +126,6 @@ function NewRestaurant() {
       console.log(err);
       close();
       errorToast();
-    } finally {
-      close();
     }
   };
 
@@ -146,7 +154,6 @@ function NewRestaurant() {
 
   const modalContent = (form) => {
     const restDetails = {
-      // add user info in req body
       Name: form.values.name,
       Category: form.values.category,
       Address: form.values.address,
@@ -155,7 +162,9 @@ function NewRestaurant() {
         form.values.timeClose && form.values.timeOpen
           ? `${form.values.timeOpen} - ${form.values.timeClose}`
           : "No opening hours specified",
-      DaysClosed: form.values.daysClose
+      
+      DaysClosed: 
+        form.values.daysClose && form.values.daysClose.length > 0
         ? form.values.daysClose
         : "No rest days specified",
       Phone: form.values.phone ? form.values.phone : "No phone number provided",
@@ -167,7 +176,7 @@ function NewRestaurant() {
         {Object.entries(restDetails).map(([key, value]) => (
           <li key={key}>
             {key === "DaysClosed"
-              ? `Days Closed: ${value.join(", ")}`
+              ? `Days Closed: ${Array.isArray(value) ? value.join(", ") : value}`
               : key === "MaximumPax"
               ? `Maximum Pax: ${value}`
               : key === "OpeningHours"
@@ -191,7 +200,7 @@ function NewRestaurant() {
           <Box maw={500} mx="auto" mt="xl">
             <form
               onSubmit={form.onSubmit(() => {
-                if (form.isValid) {
+                if (form.isValid()) {
                   toggle();
                 }
               })}
@@ -210,11 +219,47 @@ function NewRestaurant() {
                 mt="md"
                 {...form.getInputProps("category")}
               />
+              
+              {/* --- UPDATED LOCATION LIST (Delhi NCR) --- */}
               <Select
                 label="Location"
                 withAsterisk
-                placeholder="Pick one"
-                data={["North", "South", "East", "West", "Central"]}
+                placeholder="Select Area"
+                searchable
+                data={[
+                    // Delhi Central/South
+                    "Connaught Place (CP)",
+                    "Hauz Khas Village",
+                    "Saket",
+                    "Vasant Kunj",
+                    "Nehru Place",
+                    "Lajpat Nagar",
+                    "Greater Kailash (GK)",
+                    "Khan Market",
+                    
+                    // Delhi West/North
+                    "Rajouri Garden",
+                    "Punjabi Bagh",
+                    "Dwarka",
+                    "Rohini",
+                    "Pitampura",
+                    "Kamla Nagar",
+                
+                    // Gurugram (Gurgaon)
+                    "Cyber Hub (Gurgaon)",
+                    "Sector 29 (Gurgaon)",
+                    "Golf Course Road (Gurgaon)",
+                    "MG Road (Gurgaon)",
+                    "Udyog Vihar (Gurgaon)",
+                    "Sohna Road (Gurgaon)",
+                
+                    // Noida & Others
+                    "Sector 18 (Noida)",
+                    "Sector 62 (Noida)",
+                    "Greater Noida",
+                    "Ghaziabad",
+                    "Faridabad"
+                ]}
                 mt="md"
                 {...form.getInputProps("location")}
               />
@@ -229,7 +274,7 @@ function NewRestaurant() {
               <TextInput
                 label="Phone"
                 type="number"
-                placeholder="01234567 (Exclude +65 country code)"
+                placeholder="9999999999 (Exclude +91 country code)"
                 mt="md"
                 {...form.getInputProps("phone")}
               />
@@ -301,7 +346,7 @@ function NewRestaurant() {
                 <Button
                   type="button"
                   component={Link}
-                  to={`/owner/restaurant`} //return to Owner Dashboard
+                  to={`/owner/restaurant`} 
                   variant="outline"
                 >
                   Cancel

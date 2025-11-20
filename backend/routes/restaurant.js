@@ -9,42 +9,46 @@ var restaurantController = require("../controllers/restaurant");
 router.get("/", restaurantController.getAllRestaurants);
 
 // @desc    Get restaurant by User
-// @route   GET /restaurant/byUser
-// @access  Public
+// @route   GET /restaurant/user
+// @access  Private (Owner only)
 router.get(
   "/user",
-  securityMiddleware.checkIfOwner,
+  securityMiddleware.checkJWT,      // <--- STEP 1: Verify Identity
+  securityMiddleware.checkIfOwner,  // <--- STEP 2: Verify Role
   restaurantController.getRestaurantByOwnerId
 );
 
 // @desc    Get restaurants(by rest id)
-// @route   GET /restaurant/:restID
+// @route   GET /restaurant/:restId
 // @access  Public
 router.get("/:restId", restaurantController.getRestaurant);
 
 // @desc    Create restaurants
 // @route   POST /restaurant/create
-// @access  Public but to retain user created info
+// @access  Private (Owner only)
 router.post(
   "/create",
-  securityMiddleware.checkIfOwner,
+  securityMiddleware.checkJWT,      // <--- ADDED THIS
+  securityMiddleware.checkIfOwner,  // <--- Runs after Identity is verified
   restaurantController.createRestaurant
 );
 
 // @desc    Edit restaurant
 // @route   POST /restaurant/:restId/edit
-// @access  Private (bearer token passed in header - to check if user is owner of restaurant)
+// @access  Private (Owner only)
 router.post(
   "/:restId/edit",
+  securityMiddleware.checkJWT,      // <--- ADDED THIS
   securityMiddleware.checkIfOwner,
   restaurantController.editRestaurant
 );
 
-// @desc    Edit restaurant
-// @route   POST /restaurant/:restId/edit
-// @access  Private (bearer token passed in header -  to check if user is owner of restaurant))
+// @desc    Delete restaurant
+// @route   DELETE /restaurant/:restId/delete
+// @access  Private (Owner only)
 router.delete(
   "/:restId/delete",
+  securityMiddleware.checkJWT,      // <--- ADDED THIS
   securityMiddleware.checkIfOwner,
   restaurantController.deleteRestaurant
 );

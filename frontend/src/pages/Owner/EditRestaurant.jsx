@@ -38,25 +38,36 @@ function EditRestaurant() {
   const { user } = useOutletContext();
 
   const form = useForm({
+    // Added initialValues to prevent "uncontrolled input" warnings
+    initialValues: {
+      name: "",
+      category: "",
+      location: "",
+      address: "",
+      phone: "",
+      websiteUrl: "",
+      maxPax: 10,
+      timeOpen: "",
+      timeClose: "",
+      daysClose: [],
+      description: "",
+      image: "",
+    },
     validate: {
       category: (value) =>
-        value === undefined &&
+        !value &&
         "Please choose a category which best represents your restaurant cuisine",
       location: (value) =>
-        value === undefined &&
+        !value &&
         "Please choose an area which best represents your restaurant's location",
       address: (value) =>
-        value === undefined && "Please provide your restaurant address",
-      // phone: (value) =>
-      //   value &&
-      //   /^[1-9]\d{7}$/.test(value) &&
-      //   "Please enter a valid 8-digit number for Phone",
+        !value && "Please provide your restaurant address",
       maxPax: (value) =>
-        value === undefined &&
+        !value &&
         "Please enter a number for the max no. of people your restaurant can accept for bookings",
-      timeOpen: (value) => value === undefined && "Please enter a time",
+      timeOpen: (value) => !value && "Please enter a time",
       timeClose: (value, values) =>
-        value === undefined
+        !value
           ? "Please enter a time"
           : value < values.timeOpen &&
             "Closing time must be later than opening time.",
@@ -71,30 +82,38 @@ function EditRestaurant() {
       return;
     }
     const getData = async () => {
-      const resData = await sendRequest(
-        `${import.meta.env.VITE_API_URL}/restaurant/user`,
-        "GET"
-      );
-      if (!resData || resData.length === 0) {
-        navigate("/owner/restaurant");
-        return;
+      try {
+        const resData = await sendRequest(
+          `${import.meta.env.VITE_API_URL}/restaurant/user`,
+          "GET"
+        );
+        if (!resData || resData.length === 0) {
+          navigate("/owner/restaurant");
+          return;
+        }
+        
+        setData(resData);
+        
+        // Populate form with existing data
+        form.setValues({
+          name: resData.name || "",
+          image: resData.image || "",
+          category: resData.category || "",
+          location: resData.location || "",
+          timeOpen: formatTime(resData.timeOpen),
+          timeClose: formatTime(resData.timeClose),
+          address: resData.address || "",
+          daysClose: resData.daysClose || [],
+          phone: resData.phone || "",
+          websiteUrl: resData.websiteUrl || "",
+          maxPax: resData.maxPax || 10,
+          description: resData.description || "",
+        });
+        setLoading(false);
+      } catch (error) {
+        console.log(error);
+        setLoading(false);
       }
-      setLoading(false);
-      setData(resData);
-      form.setValues({
-        name: resData.name,
-        image: resData.image,
-        category: resData.category,
-        location: resData.location,
-        timeOpen: formatTime(resData.timeOpen),
-        timeClose: formatTime(resData.timeClose),
-        address: resData.address,
-        daysClose: resData.daysClose,
-        phone: resData.phone,
-        websiteUrl: resData.websiteUrl,
-        maxPax: resData.maxPax,
-        description: resData.description,
-      });
     };
     getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,8 +137,6 @@ function EditRestaurant() {
       console.log(err);
       close();
       errorToast();
-    } finally {
-      close();
     }
   };
 
@@ -167,13 +184,10 @@ function EditRestaurant() {
   // get user edited info
   const compareData = (var1, var2) => {
     const displayData = {};
-    console.log(var1.daysClose);
-    console.log(var2.daysClose);
 
     Object.keys(var1).forEach((key) => {
       if (Object.prototype.hasOwnProperty.call(var2, key)) {
         // need separate comparison for daysClose as it is stored as an array in the backend db
-        // unlike the rest
         if (key === "daysClose") {
           if (var1.daysClose) {
             const isDaysCloseEqual =
@@ -184,10 +198,9 @@ function EditRestaurant() {
               displayData[key] = var1[key];
             }
           } else {
-            return; //if the field is not edited, var1.daysClose would be undefined (from console.logs)
+            return;
           }
         } else if (var1[key] !== var2[key]) {
-          // Check if the value is different
           displayData[key] = var1[key];
         }
       }
@@ -200,8 +213,9 @@ function EditRestaurant() {
         <ul>
           {Object.entries(displayData).map(([key, value]) => (
             <li key={key}>
+              {/* --- FIX: Added Array Check here to prevent Crash --- */}
               {key === "daysClose"
-                ? `Days Closed: ${value.join(", ")}`
+                ? `Days Closed: ${Array.isArray(value) ? value.join(", ") : value}`
                 : key === "maxPax"
                 ? `Maximum Pax: ${value}`
                 : key === "timeOpen"
@@ -230,7 +244,7 @@ function EditRestaurant() {
           <Box maw={500} mx="auto" mt="xl">
             <form
               onSubmit={form.onSubmit(() => {
-                if (form.isValid) {
+                if (form.isValid()) {
                   confirmInput(form.values);
                   toggle();
                 }
@@ -250,11 +264,47 @@ function EditRestaurant() {
                 mt="md"
                 {...form.getInputProps("category")}
               />
+              
+              {/* --- UPDATED LOCATION LIST (Delhi NCR) --- */}
               <Select
                 label="Location"
                 withAsterisk
-                placeholder="Pick one"
-                data={["North", "South", "East", "West", "Central"]}
+                placeholder="Select Area"
+                searchable
+                data={[
+                    // Delhi Central/South
+                    "Connaught Place (CP)",
+                    "Hauz Khas Village",
+                    "Saket",
+                    "Vasant Kunj",
+                    "Nehru Place",
+                    "Lajpat Nagar",
+                    "Greater Kailash (GK)",
+                    "Khan Market",
+                    
+                    // Delhi West/North
+                    "Rajouri Garden",
+                    "Punjabi Bagh",
+                    "Dwarka",
+                    "Rohini",
+                    "Pitampura",
+                    "Kamla Nagar",
+                
+                    // Gurugram (Gurgaon)
+                    "Cyber Hub (Gurgaon)",
+                    "Sector 29 (Gurgaon)",
+                    "Golf Course Road (Gurgaon)",
+                    "MG Road (Gurgaon)",
+                    "Udyog Vihar (Gurgaon)",
+                    "Sohna Road (Gurgaon)",
+                
+                    // Noida & Others
+                    "Sector 18 (Noida)",
+                    "Sector 62 (Noida)",
+                    "Greater Noida",
+                    "Ghaziabad",
+                    "Faridabad"
+                ]}
                 mt="md"
                 {...form.getInputProps("location")}
               />
@@ -269,7 +319,7 @@ function EditRestaurant() {
               <TextInput
                 label="Phone"
                 type="number"
-                placeholder="01234567 (Exclude +65 country code)"
+                placeholder="9999999999 (Exclude +91 country code)"
                 mt="md"
                 {...form.getInputProps("phone")}
               />

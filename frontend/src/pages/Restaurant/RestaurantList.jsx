@@ -58,7 +58,7 @@ function RestaurantList() {
       ) : (
         <>
           <Title order={2} ta="center">
-            Book these tables, now available on ChopeSeats.
+            Book these tables, now available on Dinerly.
           </Title>
 
           <Flex
